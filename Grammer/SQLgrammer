@@ -1,0 +1,87 @@
+# Grammar for SQL
+
+# Start symbols for the grammar:
+#       sql_input is the input for SQL statements
+#       select_stmt is for SELECT queries
+#       insert_stmt is for INSERT commands
+#       update_stmt is for UPDATE commands
+#       delete_stmt is for DELETE commands
+
+sql_input: (stmt ';')* ENDMARKER
+
+stmt: select_stmt
+    | insert_stmt
+    | update_stmt
+    | delete_stmt
+    | create_stmt
+    | drop_stmt
+    | alter_stmt
+
+# SELECT Statement
+select_stmt: 'SELECT' select_list
+             'FROM' table_list
+             [where_clause]
+             [group_by_clause]
+             [having_clause]
+             [order_by_clause]
+             [limit_clause]
+
+select_list: '*' | column_list
+column_list: column_name (',' column_name)*
+
+table_list: table_name (',' table_name)*
+
+where_clause: 'WHERE' condition
+condition: expr (comp_op expr)*
+
+group_by_clause: 'GROUP' 'BY' column_list
+having_clause: 'HAVING' condition
+order_by_clause: 'ORDER' 'BY' column_list [asc_desc]
+limit_clause: 'LIMIT' NUMBER [offset_clause]
+offset_clause: 'OFFSET' NUMBER
+
+# INSERT Statement
+insert_stmt: 'INSERT' 'INTO' table_name '(' column_list ')' 'VALUES' '(' value_list ')'
+value_list: value (',' value)*
+
+# UPDATE Statement
+update_stmt: 'UPDATE' table_name 'SET' assignment_list [where_clause]
+assignment_list: column_name '=' value (',' column_name '=' value)*
+
+# DELETE Statement
+delete_stmt: 'DELETE' 'FROM' table_name [where_clause]
+
+# CREATE Statement (example for creating tables)
+create_stmt: 'CREATE' 'TABLE' table_name '(' column_definitions ')'
+column_definitions: column_definition (',' column_definition)*
+column_definition: column_name data_type [column_constraints]
+column_constraints: 'NOT' 'NULL' | 'UNIQUE' | 'PRIMARY' 'KEY' | 'DEFAULT' value
+
+# DROP Statement
+drop_stmt: 'DROP' 'TABLE' table_name
+
+# ALTER Statement (example for altering tables)
+alter_stmt: 'ALTER' 'TABLE' table_name alter_action
+alter_action: 'ADD' column_definition | 'DROP' column_name
+
+# Expression and operators
+expr: term (('+' | '-' | '*' | '/' | '%' | 'AND' | 'OR') term)*
+
+term: column_name | value | function_call
+value: STRING | NUMBER | 'NULL'
+
+# Comparison operators
+comp_op: '=' | '>' | '<' | '>=' | '<=' | '!=' | 'IN' | 'NOT' 'IN' | 'LIKE' | 'IS' ['NOT']
+
+# Miscellaneous
+asc_desc: 'ASC' | 'DESC'
+column_name: NAME
+table_name: NAME
+data_type: 'INT' | 'VARCHAR' '(' NUMBER ')' | 'TEXT' | 'DATE'
+function_call: NAME '(' [arg_list] ')'
+arg_list: expr (',' expr)*
+
+# Token types
+NAME: [a-zA-Z_][a-zA-Z0-9_]*
+NUMBER: [0-9]+
+STRING: '\'' [^\']* '\''
